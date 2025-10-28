@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ricky's 自動販賣機</title>
+  <style>
+    body {
+      /* Neutral dark background */
+      background: linear-gradient(180deg, #333 0%, #111 100%);
+      font-family: Arial, Helvetica, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column; 
+      height: 100vh;
+      margin: 0;
+      color: #fff;
+    }
+
+    /* VENDING MACHINE TITLE */
+    .machine-title {
+      font-family: Arial, sans-serif;
+      font-size: 32px;
+      color: #fff; 
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+    }
+
+    .machine-container {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    /* MAIN MACHINE BODY (Adjusted height) */
+    .vending-machine {
+      width: 380px;
+      height: 650px; /* Kept height same for visual consistency */
+      /* Realistic metallic dark grey */
+      background: linear-gradient(180deg, #4d4d4d, #333333);
+      border-radius: 15px;
+      /* Subtle 3D shadow */
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8), inset 0 3px 5px rgba(255, 255, 255, 0.2);
+      position: relative;
+      overflow: hidden;
+      border: 5px solid #222; 
+      padding-bottom: 5px; /* Added some padding to compensate for removed screen space */
+    }
+
+    .glass-window {
+      width: 80%;
+      height: 80%; /* Increased height to fill space left by the screen */
+      /* Darkened, reflective glass effect */
+      background: rgba(0, 0, 0, 0.6); 
+      border: 4px inset #444; 
+      border-radius: 10px;
+      margin: 30px auto 15px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); 
+      grid-gap: 10px;
+      padding: 10px;
+      /* Reflection highlight */
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 0 2px #111, inset 0 0 0 1px #888; 
+    }
+
+    .item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      text-align: center;
+      padding: 8px;
+      transition: 0.2s;
+      border: 1px solid #333;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+    }
+
+    .item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(1.03);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+
+    .item span {
+      display: block;
+      margin-top: 5px;
+      font-size: 13px;
+      color: #ccc;
+    }
+
+    .price {
+      font-size: 12px;
+      color: #ffda63; /* Yellow price tag */
+    }
+
+    .code {
+      font-size: 11px;
+      color: #90caf9; /* Light blue code */
+      font-weight: bold;
+    }
+
+    /* SCREEN (Relocated to side panel, kept style similar to original) */
+    .screen {
+      background: #001f3f; /* Deep blue background */
+      color: #90caf9; /* Light blue text */
+      width: 95%; /* Adjusted width for side panel */
+      margin: 10px auto 15px; /* Added margins to separate it from surrounding elements */
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 0 5px #90caf9; /* Subtle blue glow */
+      height: 55px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border: 1px solid #444; 
+    }
+
+    .slot {
+      width: 60%;
+      height: 40px;
+      background: #1c1c1c; 
+      margin: 15px auto 10px;
+      border-radius: 8px;
+      border: 2px solid #555;
+      text-align: center;
+      padding-top: 10px;
+      font-size: 12px;
+      color: #aaa;
+      box-shadow: inset 0 0 10px rgba(0,0,0,1);
+    }
+
+    .return-slot {
+      width: 40%;
+      height: 18px;
+      background: #252525;
+      border: 1px solid #555;
+      margin: 5px auto 20px;
+      border-radius: 4px;
+      color: #999;
+      text-align: center;
+      font-size: 11px;
+      line-height: 18px;
+      box-shadow: inset 0 0 3px rgba(0,0,0,0.8);
+      cursor: pointer;
+    }
+
+    /* SIDE PANEL (Control Panel) */
+    .side-panel {
+      width: 170px;
+      height: 650px;
+      /* Slightly lighter metallic grey */
+      background: linear-gradient(180deg, #666, #444);
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.7), inset 0 0 10px rgba(255,255,255,0.1);
+      padding: 15px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start; /* Aligned to the top for new element order */
+      border: 3px solid #333;
+    }
+
+    .coin-slot {
+      width: 60px;
+      height: 8px;
+      background: linear-gradient(180deg, #888, #444);
+      border-radius: 4px;
+      box-shadow: inset 0 2px 3px rgba(0,0,0,0.8);
+      margin-top: 10px;
+    }
+    .coin-slot.over {
+      outline: 2px solid #90caf9;
+      box-shadow: 0 0 8px rgba(144,202,249,0.6), inset 0 2px 3px rgba(0,0,0,0.8);
+      background: linear-gradient(180deg, #a9d3ff, #5f9fe6);
+    }
+    /* coin drag image + animation */
+    .drag-coin {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #2b2b2b;
+      background: radial-gradient(circle at 30% 30%, #fff7c4, #ffd24d 40%, #d6a81f 100%);
+      border: 1px solid #b8860b;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.4), inset 0 2px 6px rgba(255,255,255,0.5);
+      font-size: 12px;
+      pointer-events: none;
+    }
+    .drag-coin.anim {
+      position: absolute;
+      z-index: 9999;
+      transition: transform 600ms cubic-bezier(.22,.9,.3,1), opacity 320ms ease-out;
+      will-change: transform, opacity;
+      pointer-events: none;
+    }
+
+    .coin-label {
+      text-align: center;
+      font-size: 12px;
+      color: #ccc;
+      margin-top: 6px;
+      text-shadow: none;
+    }
+
+    .coin-display {
+      background: #000;
+      color: #ffda63; /* Yellow-orange currency color */
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      text-align: center;
+      border: 1px solid #666;
+      border-radius: 4px;
+      width: 90px;
+      padding: 4px;
+      margin-top: 10px; 
+      margin-bottom: 0; /* Removed bottom margin */
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.9);
+    }
+
+    .coin-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-top: 15px; 
+      margin-bottom: 25px; /* Added spacing above keypad */
+    }
+
+    .coin-btn {
+      background: radial-gradient(circle at top, #aaa, #777); /* Silver coin buttons */
+      border: 1px solid #444;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      color: #333;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.6);
+      transition: 0.1s;
+      font-size: 12px;
+    }
+
+    .coin-btn:hover {
+      transform: scale(1.05);
+      background: radial-gradient(circle at top, #bbb, #888);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.8);
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 45px);
+      grid-gap: 8px;
+      margin-top: 10px;
+    }
+
+    .key-btn {
+      width: 45px;
+      height: 45px;
+      border-radius: 5px;
+      background: #252525; /* Dark control panel buttons */
+      color: #fff;
+      font-size: 16px;
+      border: 1px solid #444;
+      cursor: pointer;
+      transition: 0.1s;
+      box-shadow: inset 0 2px 3px rgba(255,255,255,0.1), 0 2px 2px rgba(0,0,0,0.8);
+    }
+
+    .key-btn:hover {
+      background: #3a3a3a;
+      box-shadow: inset 0 2px 3px rgba(255,255,255,0.2), 0 3px 3px rgba(0,0,0,1);
+    }
+
+    .coin-return-btn { 
+      background: #3d3d3d;
+      width: 70px;
+      height: 25px;
+      border: 2px outset #555;
+      border-radius: 5px;
+      text-align: center;
+      color: #ddd;
+      font-size: 11px;
+      line-height: 22px;
+      margin-top: auto; /* Pushes the return button to the very bottom */
+      margin-bottom: 10px;
+      box-shadow: inset 0 0 3px rgba(0,0,0,0.8);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  
+  <h1 class="machine-title">RICKY'S VENDING MACHINE</h1>
+
+  <div class="machine-container">
+    <div class="vending-machine">
+      <div class="glass-window">
+        <div class="item">🍫<span>巧克力</span><span class="price">NT$35</span><span class="code">11</span></div>
+        <div class="item">🥔<span>洋芋片</span><span class="price">NT$40</span><span class="code">12</span></div>
+        <div class="item">🥤<span>可樂</span><span class="price">NT$45</span><span class="code">13</span></div>
+        
+        <div class="item">💧<span>礦泉水</span><span class="price">NT$25</span><span class="code">21</span></div>
+        <div class="item">🧁<span>杯子蛋糕</span><span class="price">NT$50</span><span class="code">22</span></div>
+        <div class="item">🍬<span>糖果</span><span class="price">NT$20</span><span class="code">23</span></div>
+
+        <div class="item">🍎<span>蘋果汁</span><span class="price">NT$30</span><span class="code">31</span></div>
+        <div class="item">🍪<span>餅乾</span><span class="price">NT$35</span><span class="code">32</span></div>
+        <div class="item">🍵<span>綠茶</span><span class="price">NT$40</span><span class="code">33</span></div>
+        
+      </div>
+      
+      <div class="slot">⬇ 商品出貨口 Product Tray</div>
+      <div class="return-slot" onclick="returnCoins()" style="cursor: pointer;">退幣口 Coin Return</div>
+    </div>
+
+    <div class="side-panel">
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div class="coin-slot"></div>
+        <div class="coin-label">投入硬幣口<br>Coin Slot</div>
+        <div class="coin-display" id="coinDisplay">NT$0</div>
+      </div>
+
+      <div class="screen" id="screen">
+        請投入硬幣<br>或輸入代碼
+      </div>
+
+      <div class="coin-buttons">
+        <button class="coin-btn" onclick="insertCoin(20)">NT$20</button> 
+        <button class="coin-btn" onclick="insertCoin(10)">NT$10</button>
+        <button class="coin-btn" onclick="insertCoin(50)">NT$50</button>
+        <button class="coin-btn" onclick="insertCoin(100)">NT$100</button>
+      </div>
+
+      <div class="keypad">
+        <button class="key-btn" onclick="pressNumber(1)">1</button>
+        <button class="key-btn" onclick="pressNumber(2)">2</button>
+        <button class="key-btn" onclick="pressNumber(3)">3</button>
+        <button class="key-btn" onclick="pressNumber(4)">4</button>
+        <button class="key-btn" onclick="pressNumber(5)">5</button>
+        <button class="key-btn" onclick="pressNumber(6)">6</button>
+        <button class="key-btn" onclick="pressNumber(7)">7</button>
+        <button class="key-btn" onclick="pressNumber(8)">8</button>
+        <button class="key-btn" onclick="pressNumber(9)">9</button>
+        <button class="key-btn" onclick="clearInput()">C</button>
+        <button class="key-btn" onclick="pressNumber(0)">0</button>
+        <button class="key-btn" onclick="buyItem()">OK</button>
+      </div>
+
+      <div class="coin-return-btn" onclick="returnCoins()" style="cursor: pointer;">退幣鈕</div>
+    </div>
+  </div>
+
+  <script>
+    let balance = 0;
+    let inputCode = "";
+
+    const screen = document.getElementById("screen");
+    const coinDisplay = document.getElementById("coinDisplay");
+
+    const items = {
+      // code: price, name
+      '11': { price: 35, name: '巧克力' },
+      '12': { price: 40, name: '洋芋片' },
+      '13': { price: 45, name: '可樂' },
+      '21': { price: 25, name: '礦泉水' },
+      '22': { price: 50, name: '杯子蛋糕' },
+      '23': { price: 20, name: '糖果' },
+      '31': { price: 30, name: '蘋果汁' },
+      '32': { price: 35, name: '餅乾' },
+      '33': { price: 40, name: '綠茶' }
+    };
+
+    function updateDisplay() {
+      coinDisplay.textContent = `NT$${balance}`;
+      if (inputCode.length > 0) {
+        screen.innerHTML = `代碼: ${inputCode}<br>NT$${balance} 已投入`;
+      } else if (balance > 0) {
+        screen.innerHTML = `已投入 NT$${balance}<br>請輸入代碼`;
+      } else {
+        screen.innerHTML = `請投入硬幣<br>或輸入代碼`;
+      }
+    }
+
+    function insertCoin(amount) {
+      balance += amount;
+      updateDisplay();
+    }
+
+    function pressNumber(num) {
+      if (inputCode.length < 2) {
+        inputCode += num;
+        updateDisplay();
+      }
+    }
+
+    function clearInput() {
+      inputCode = "";
+      updateDisplay();
+    }
+
+    function buyItem() {
+      if (!items[inputCode]) {
+        screen.innerHTML = `代碼錯誤<br>請重新輸入`;
+        inputCode = "";
+        return;
+      }
+
+      const item = items[inputCode];
+      const price = item.price;
+      const itemName = item.name;
+
+      if (balance >= price) {
+        let change = balance - price;
+        balance = 0; // Reset balance
+        coinDisplay.textContent = `NT$0`;
+
+        // Display purchase message and change
+        screen.innerHTML = `已購買 ${itemName} (${inputCode})<br>找零 NT$${change}`;
+        
+        // Reset screen after a short delay
+        setTimeout(() => {
+          screen.innerHTML = `感謝您的購買!<br>請拿取商品及找零`;
+        }, 3000);
+
+      } else {
+        screen.innerHTML = `金額不足<br>商品NT$${price}`;
+      }
+
+      inputCode = "";
+    }
+    
+    function returnCoins() {
+        if (balance > 0) {
+            let returnedAmount = balance;
+            balance = 0;
+            coinDisplay.textContent = `NT$0`;
+            screen.innerHTML = `已退還 NT$${returnedAmount}<br>歡迎再次使用!`;
+        } else {
+            screen.innerHTML = `沒有可退還的硬幣`;
+        }
+        inputCode = "";
+        setTimeout(updateDisplay, 3000); // Reset screen after a few seconds
+    }
+
+    // --- Drag & drop support: drag coin buttons into the coin slot ---
+    (function setupDragDrop() {
+      const coinButtons = document.querySelectorAll('.coin-btn');
+      coinButtons.forEach(btn => {
+        // make them draggable
+        btn.setAttribute('draggable', 'true');
+        btn.addEventListener('dragstart', (e) => {
+          // extract numeric amount (e.g. "NT$20" -> 20)
+          const txt = btn.textContent || '';
+          const digits = txt.replace(/[^0-9]/g, '');
+          e.dataTransfer.setData('text/plain', digits);
+
+          // create a coin-shaped drag image for a tactile feel
+          const dragEl = document.createElement('div');
+          dragEl.className = 'drag-coin';
+          dragEl.textContent = txt.replace(/[^0-9]/g, '');
+          // place offscreen, attach as drag image
+          dragEl.style.position = 'absolute';
+          dragEl.style.left = '-9999px';
+          document.body.appendChild(dragEl);
+          // center of coin approx (22,22)
+          e.dataTransfer.setDragImage(dragEl, 22, 22);
+          // remove after a tick
+          setTimeout(() => { try { document.body.removeChild(dragEl); } catch (err) {} }, 0);
+        });
+      });
+
+      const coinSlotEl = document.querySelector('.coin-slot');
+      if (!coinSlotEl) return;
+
+      coinSlotEl.addEventListener('dragover', (e) => {
+        e.preventDefault(); // allow drop
+        coinSlotEl.classList.add('over');
+      });
+
+      coinSlotEl.addEventListener('dragleave', () => {
+        coinSlotEl.classList.remove('over');
+      });
+
+      coinSlotEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        coinSlotEl.classList.remove('over');
+        const data = e.dataTransfer.getData('text/plain');
+        const amount = parseInt(data, 10);
+        if (isNaN(amount) || amount <= 0) return;
+
+        // create an animated coin at drop position that slides into the slot,
+        // then credit the balance after the animation completes
+        const dropX = e.clientX;
+        const dropY = e.clientY;
+
+        const anim = document.createElement('div');
+        anim.className = 'drag-coin anim';
+        anim.textContent = amount; // show numeric on the coin
+        // position the coin centered at cursor
+        const size = 44;
+        anim.style.left = (dropX - size/2) + 'px';
+        anim.style.top = (dropY - size/2) + 'px';
+        anim.style.opacity = '1';
+        document.body.appendChild(anim);
+
+        // compute target position (center of coin slot)
+        const targetRect = coinSlotEl.getBoundingClientRect();
+        const targetX = targetRect.left + targetRect.width/2 - size/2;
+        const targetY = targetRect.top + targetRect.height/2 - size/2;
+
+        // animate toward the slot
+        requestAnimationFrame(() => {
+          const dx = targetX - (dropX - size/2);
+          const dy = targetY - (dropY - size/2);
+          anim.style.transform = `translate(${dx}px, ${dy}px) scale(0.42)`;
+          anim.style.opacity = '0.75';
+        });
+
+        // after animation ends, remove element and credit the coin
+        const cleanup = () => {
+          try { document.body.removeChild(anim); } catch (err) {}
+          insertCoin(amount);
+        };
+
+        // fallback: if transitionend doesn't fire (older browsers), ensure cleanup
+        let called = false;
+        const onEnd = () => { if (called) return; called = true; cleanup(); };
+        anim.addEventListener('transitionend', onEnd);
+        setTimeout(onEnd, 700);
+      });
+    })();
+  </script>
+
+</body>
+</html>
