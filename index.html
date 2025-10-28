@@ -170,6 +170,11 @@
       box-shadow: inset 0 2px 3px rgba(0,0,0,0.8);
       margin-top: 10px;
     }
+    .coin-slot.over {
+      outline: 2px solid #90caf9;
+      box-shadow: 0 0 8px rgba(144,202,249,0.6), inset 0 2px 3px rgba(0,0,0,0.8);
+      background: linear-gradient(180deg, #a9d3ff, #5f9fe6);
+    }
 
     .coin-label {
       text-align: center;
@@ -418,6 +423,59 @@
         inputCode = "";
         setTimeout(updateDisplay, 3000); // Reset screen after a few seconds
     }
+
+    // --- Drag & drop support: drag coin buttons into the coin slot ---
+    (function setupDragDrop() {
+      const coinButtons = document.querySelectorAll('.coin-btn');
+      coinButtons.forEach(btn => {
+        // make them draggable
+        btn.setAttribute('draggable', 'true');
+        btn.addEventListener('dragstart', (e) => {
+          // extract numeric amount (e.g. "NT$20" -> 20)
+          const txt = btn.textContent || '';
+          const digits = txt.replace(/[^0-9]/g, '');
+          e.dataTransfer.setData('text/plain', digits);
+
+          // small drag image
+          const dragEl = document.createElement('div');
+          dragEl.textContent = txt.trim();
+          dragEl.style.padding = '6px 10px';
+          dragEl.style.background = '#fff';
+          dragEl.style.color = '#000';
+          dragEl.style.border = '1px solid #ccc';
+          dragEl.style.borderRadius = '6px';
+          dragEl.style.fontSize = '12px';
+          dragEl.style.position = 'absolute';
+          dragEl.style.top = '-9999px';
+          document.body.appendChild(dragEl);
+          e.dataTransfer.setDragImage(dragEl, 10, 10);
+          // remove after next paint
+          setTimeout(() => document.body.removeChild(dragEl), 0);
+        });
+      });
+
+      const coinSlotEl = document.querySelector('.coin-slot');
+      if (!coinSlotEl) return;
+
+      coinSlotEl.addEventListener('dragover', (e) => {
+        e.preventDefault(); // allow drop
+        coinSlotEl.classList.add('over');
+      });
+
+      coinSlotEl.addEventListener('dragleave', () => {
+        coinSlotEl.classList.remove('over');
+      });
+
+      coinSlotEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        coinSlotEl.classList.remove('over');
+        const data = e.dataTransfer.getData('text/plain');
+        const amount = parseInt(data, 10);
+        if (!isNaN(amount) && amount > 0) {
+          insertCoin(amount);
+        }
+      });
+    })();
   </script>
 
 </body>
